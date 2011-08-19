@@ -58,7 +58,6 @@ def _process_signup(request, data, account):
         u.save()
         account.user = u
         account.save()
-        send_email_confirmation(u, request=request)
         ret = complete_social_signup(request, u, account)
     return ret
         
