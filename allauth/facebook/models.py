@@ -1,3 +1,5 @@
+import urllib2
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -31,7 +33,14 @@ class FacebookAccount(SocialAccount):
         return self.link
     
     def get_avatar_url(self):
-        return 'http://graph.facebook.com/%s/picture?type=large' % self.social_id
+        url = 'http://graph.facebook.com/%s/picture?type=large' % self.social_id
+        
+        # The above URL redirects to the actual URL of the profile
+        # image file. This urllib2 stuff is for getting the final URL
+        # after redirection.
+        req = urllib2.Request(url)
+        res = urllib2.urlopen(req)
+        return res.geturl()
 
     def get_provider(self):
         return SocialAccountProvider.FACEBOOK
