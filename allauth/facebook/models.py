@@ -31,7 +31,7 @@ class FacebookAccount(SocialAccount):
         return self.link
     
     def get_avatar_url(self):
-        return 'http://graph.facebook.com/%s/picture?type=large' % self.name
+        return 'http://graph.facebook.com/%s/picture?type=large' % self.social_id
 
     def get_provider(self):
         return SocialAccountProvider.FACEBOOK
