@@ -42,12 +42,7 @@ def _process_signup(request, data, account):
             # Nope, email is required and we don't have it yet...
             auto_signup = False
     if not auto_signup:
-        request.session['socialaccount_signup'] = dict(data=data,
-                                                       account=account)
-        url = '/'
-        next = request.REQUEST.get('next')
-        if next:
-            url = url + '?' + urlencode(dict(next=next))
+        url = reverse('socialaccount_login_error')
         ret = HttpResponseRedirect(url)
     else:
         # FIXME: There is some duplication of logic inhere 
