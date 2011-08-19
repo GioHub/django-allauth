@@ -38,6 +38,21 @@ def _process_signup(request, data, account):
                     # FIXME: We redirect to signup form -- user will
                     # see email address conflict only after posting
                     # whereas we detected it here already.
+                else:
+                    # Extra stuff hacked in here to integrate with
+                    # the houseguest app.
+                    # Will be ignored if the houseguest app can't be
+                    # imported, thus making this slightly less hacky.
+                    try:
+                        from houseguests.models import HouseGuest
+                        try:
+                            guest = HouseGuest.objects.get(email=email)
+                            if not guest.active:
+                                auto_signup = False
+                        except HouseGuest.DoesNotExist:
+                            auto_signup = False
+                    except ImportError:
+                        pass
         elif account_settings.EMAIL_REQUIRED:
             # Nope, email is required and we don't have it yet...
             auto_signup = False
