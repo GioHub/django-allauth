@@ -44,7 +44,7 @@ def _process_signup(request, data, account):
     if not auto_signup:
         request.session['socialaccount_signup'] = dict(data=data,
                                                        account=account)
-        url = reverse('socialaccount_signup')
+        url = '/'
         next = request.REQUEST.get('next')
         if next:
             url = url + '?' + urlencode(dict(next=next))
