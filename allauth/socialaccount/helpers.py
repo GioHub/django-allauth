@@ -40,19 +40,30 @@ def _process_signup(request, data, account):
                     # whereas we detected it here already.
                 else:
                     # Extra stuff hacked in here to integrate with
-                    # the houseguest app.
-                    # Will be ignored if the houseguest app can't be
+                    # the account whitelist app.
+                    # Will be ignored if the whitelist app can't be
                     # imported, thus making this slightly less hacky.
-                    try:
-                        from houseguests.models import HouseGuest
+                    whitelist_model_setting = getattr(
+                        settings,
+                        'SOCIALACCOUNT_WHITELIST_MODEL',
+                        None
+                    )
+                    if whitelist_model_setting:
+                        whitelist_model_path = whitelist_model_setting.split(r'.')
+                        whitelist_model_str = whitelist_model_path[-1]
+                        whitelist_path_str = r'.'.join(whitelist_model_path[:-1])
                         try:
-                            guest = HouseGuest.objects.get(email=email)
-                            if not guest.active:
-                                auto_signup = False
-                        except HouseGuest.DoesNotExist:
-                            auto_signup = False
-                    except ImportError:
-                        pass
+                            whitelist_app = __import__(whitelist_path_str, fromlist=[whitelist_path_str])
+                            whitelist_model = getattr(whitelist_app, whitelist_model_str, None)
+                            if whitelist_model:
+                                try:
+                                    guest = whitelist_model.objects.get(email=email)
+                                    if not guest.active:
+                                        auto_signup = False
+                                except whitelist_model.DoesNotExist:
+                                    auto_signup = False
+                        except ImportError:
+                            pass
         elif account_settings.EMAIL_REQUIRED:
             # Nope, email is required and we don't have it yet...
             auto_signup = False
