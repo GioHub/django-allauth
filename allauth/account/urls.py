@@ -1,13 +1,6 @@
-from django.conf import settings
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url
 
-from forms import SignupForm
-
-
-import views
-
-signup_view = "pinax.apps.signup_codes.views.signup"
-
+from . import views
 
 urlpatterns = patterns("",
     url(r"^email/$", views.email, name="account_email"),
@@ -21,7 +14,7 @@ urlpatterns = patterns("",
 #    }, name="acct_passwd_delete_done"),
     url(r"^logout/$", views.logout, name="account_logout"),
     
-    url(r"^confirm_email/(\w+)/$", "emailconfirmation.views.confirm_email", name="account_confirm_email"),
+    url(r"^confirm_email/(?P<key>\w+)/$", views.confirm_email, name="account_confirm_email"),
     
     # password reset
     url(r"^password/reset/$", views.password_reset, name="account_reset_password"),

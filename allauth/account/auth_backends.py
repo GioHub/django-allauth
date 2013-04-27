@@ -1,27 +1,43 @@
-from django.conf import settings
-
 from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth.models import User
+from django.db.models import Q
 
-import app_settings
+from ..utils import get_user_model
+
+from .app_settings import AuthenticationMethod
+from . import app_settings
+
+User = get_user_model()
 
 class AuthenticationBackend(ModelBackend):
     
     def authenticate(self, **credentials):
-        lookup_params = {}
-        if app_settings.EMAIL_AUTHENTICATION:
-            try:
-                lookup_params["email"] = credentials["email"]
-            except:
-                lookup_params["username"] = credentials["username"]
+        ret = None
+        if app_settings.AUTHENTICATION_METHOD == AuthenticationMethod.EMAIL:
+            ret = self._authenticate_by_email(**credentials)
+        elif app_settings.AUTHENTICATION_METHOD \
+                == AuthenticationMethod.USERNAME_EMAIL:
+            ret = self._authenticate_by_email(**credentials)
+            if not ret:
+                ret = self._authenticate_by_username(**credentials)
         else:
-            lookup_params["username"] = credentials["username"]
-        try:
-            user = User.objects.get(**lookup_params)
-        except User.DoesNotExist:
-            return None
-        else:
-            if user.check_password(credentials["password"]):
-                return user
+            ret = self._authenticate_by_username(**credentials)
+        return ret
 
-EmailModelBackend = AuthenticationBackend
+    def _authenticate_by_username(self, **credentials):
+        return super(AuthenticationBackend, self).authenticate(**credentials)
+
+    def _authenticate_by_email(self, **credentials):
+        # Even though allauth will pass along `email`, other apps may
+        # not respect this setting. For example, when using
+        # django-tastypie basic authentication, the login is always
+        # passed as `username`.  So let's place nice with other apps
+        # and use username as fallback
+        email = credentials.get('email', credentials.get('username'))
+        if email:
+            users = User.objects.filter(Q(email__iexact=email)
+                                        | Q(emailaddress__email__iexact
+                                            =email))
+            for user in users:
+                if user.check_password(credentials["password"]):
+                    return user
+        return None
